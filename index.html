@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Timer pro Damíka</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0; padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100vh;
+    background: #f0f0f0;
+  }
+  #timer-container {
+    flex: 2 1 auto;
+    width: 90vw;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 15px;
+  }
+  .circle-timer {
+    position: relative;
+    margin: 0 auto;
+  }
+  /* Odsazení horního sekundového ciferníku od okraje stránky */
+  #seconds-circle {
+    margin-top: 25px;
+  }
+  svg {
+    display: block;
+    margin: 0 auto;
+  }
+  .label {
+    text-align: center;
+    font-weight: bold;
+    margin-top: 5px;
+  }
+  /* Velikosti kruhů */
+  #seconds-circle svg {
+    width: 180px;
+    height: 180px;
+  }
+  #minutes-circle svg {
+    width: 140px;
+    height: 140px;
+  }
+  #hours-circle svg {
+    width: 100px;
+    height: 100px;
+  }
+  /* Progress bar pod ciferníkem hodin */
+  #total-progress-bar {
+    height: 20px;
+    width: 100%;
+    max-width: 400px;
+    background: #ddd;
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 10px auto 20px auto;
+  }
+  #total-progress-bar > div {
+    height: 100%;
+    background: #3b82f6;
+    width: 0%;
+    transition: width 0.3s linear;
+  }
+
+  /* Nastavení času */
+  #settings {
+    flex: 1 1 auto;
+    width: 90vw;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .setting-group {
+    display: flex;
+    flex-direction: column;
+  }
+  .setting-group label {
+    font-weight: bold;
+    margin-bottom: 4px;
+  }
+  .setting-group input[type=number] {
+    font-size: 1.2em;
+    padding: 6px;
+  }
+
+  /* Tlačítka */
+  #buttons {
+    width: 90vw;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  button {
+    padding: 14px;
+    font-size: 1.3em;
+    font-weight: bold;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    background-color: #3b82f6;
+    color: white;
+    user-select: none;
+    transition: background-color 0.3s ease;
+  }
+  button:active {
+    background-color: #2563eb;
+  }
+  button.running {
+    background-color: #2563eb;
+  }
+  #toggleMode {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5em;
+    user-select: none;
+  }
+</style>
+</head>
+<body>
+
+<div id="timer-container">
+
+  <div id="seconds-circle" class="circle-timer">
+    <svg viewBox="0 0 120 120">
+      <circle cx="60" cy="60" r="54" stroke="#ddd" stroke-width="12" fill="none" />
+      <circle id="seconds-progress" cx="60" cy="60" r="54" stroke="#3b82f6" stroke-width="12" fill="none" 
+        stroke-linecap="round" 
+        stroke-dasharray="339.292" 
+        stroke-dashoffset="0"
+        transform="rotate(-90 60 60)" />
+      <text id="seconds-text" x="60" y="70" font-size="28" text-anchor="middle" fill="#333" font-weight="bold">00</text>
+    </svg>
+    <div class="label">Sekundy</div>
+  </div>
+
+  <div id="minutes-circle" class="circle-timer">
+    <svg viewBox="0 0 120 120">
+      <circle cx="60" cy="60" r="48" stroke="#ddd" stroke-width="12" fill="none" />
+      <circle id="minutes-progress" cx="60" cy="60" r="48" stroke="#3b82f6" stroke-width="12" fill="none" 
+        stroke-linecap="round" 
+        stroke-dasharray="301.592" 
+        stroke-dashoffset="0"
+        transform="rotate(-90 60 60)" />
+      <text id="minutes-text" x="60" y="70" font-size="24" text-anchor="middle" fill="#333" font-weight="bold">00</text>
+    </svg>
+    <div class="label">Minuty</div>
+  </div>
+
+  <div id="hours-circle" class="circle-timer">
+    <svg viewBox="0 0 120 120">
+      <circle cx="60" cy="60" r="36" stroke="#ddd" stroke-width="12" fill="none" />
+      <circle id="hours-progress" cx="60" cy="60" r="36" stroke="#3b82f6" stroke-width="12" fill="none" 
+        stroke-linecap="round" 
+        stroke-dasharray="226.195" 
+        stroke-dashoffset="0"
+        transform="rotate(-90 60 60)" />
+      <text id="hours-text" x="60" y="70" font-size="20" text-anchor="middle" fill="#333" font-weight="bold">00</text>
+    </svg>
+    <div class="label">Hodiny</div>
+  </div>
+
+  <!-- Progress bar pod ciferníkem hodin -->
+  <div id="total-progress-bar">
+    <div></div>
+  </div>
+
+</div>
+
+<div id="settings">
+  <div class="setting-group">
+    <label for="input-hours">Hodiny (0-23):</label>
+    <input type="number" id="input-hours" min="0" max="23" value="0" />
+  </div>
+  <div class="setting-group">
+    <label for="input-minutes">Minuty (0-59):</label>
+    <input type="number" id="input-minutes" min="0" max="59" value="1" />
+  </div>
+  <div class="setting-group">
+    <label for="input-seconds">Sekundy (0-59):</label>
+    <input type="number" id="input-seconds" min="0" max="59" value="0" />
+  </div>
+</div>
+
+<div id="buttons">
+  <button id="start-stop">Start</button>
+  <button id="reset">Reset</button>
+  <button id="toggleMode" title="Přepnout režim: odpočet / přičítání">⬇️</button>
+</div>
+
+<script>
+(() => {
+  const fullCircleSec = 2 * Math.PI * 54; // seconds circle circumference
+  const fullCircleMin = 2 * Math.PI * 48; // minutes circle circumference
+  const fullCircleHrs = 2 * Math.PI * 36; // hours circle circumference
+
+  const secProgress = document.getElementById('seconds-progress');
+  const minProgress = document.getElementById('minutes-progress');
+  const hrsProgress = document.getElementById('hours-progress');
+
+  const secText = document.getElementById('seconds-text');
+  const minText = document.getElementById('minutes-text');
+  const hrsText = document.getElementById('hours-text');
+
+  const totalProgressBar = document.querySelector('#total-progress-bar > div');
+
+  const inputHours = document.getElementById('input-hours');
+  const inputMinutes = document.getElementById('input-minutes');
+  const inputSeconds = document.getElementById('input-seconds');
+
+  const startStopBtn = document.getElementById('start-stop');
+  const resetBtn = document.getElementById('reset');
+  const toggleModeBtn = document.getElementById('toggleMode');
+
+  let timerId = null;
+  let totalSeconds = 0;
+  let currentSeconds = 0;
+  let running = false;
+  let mode = 'down'; // 'down' = odpočet, 'up' = přičítání
+
+  // Přepočítat totalSeconds z inputů
+  function updateTotalSeconds() {
+    let h = Math.min(Math.max(parseInt(inputHours.value) || 0, 0), 23);
+    let m = Math.min(Math.max(parseInt(inputMinutes.value) || 0, 0), 59);
+    let s = Math.min(Math.max(parseInt(inputSeconds.value) || 0, 0), 59);
+    totalSeconds = h * 3600 + m * 60 + s;
+    if(mode === 'down') currentSeconds = totalSeconds;
+    else currentSeconds = 0;
+    updateDisplay();
+  }
+
+  // Aktualizace textů a kruhů + progress baru
+  function updateDisplay() {
+    let hrs = Math.floor(currentSeconds / 3600);
+    let mins = Math.floor((currentSeconds % 3600) / 60);
+    let secs = currentSeconds % 60;
+
+    hrsText.textContent = String(hrs).padStart(2,'0');
+    minText.textContent = String(mins).padStart(2,'0');
+    secText.textContent = String(secs).padStart(2,'0');
+
+    if(mode === 'down') {
+      secProgress.style.strokeDashoffset = fullCircleSec * (1 - secs / 60);
+      minProgress.style.strokeDashoffset = fullCircleMin * (1 - mins / 60);
+      hrsProgress.style.strokeDashoffset = fullCircleHrs * (1 - hrs / 24);
+    } else {
+      secProgress.style.strokeDashoffset = fullCircleSec * (1 - secs / 60);
+      minProgress.style.strokeDashoffset = fullCircleMin * (1 - mins / 60);
+      hrsProgress.style.strokeDashoffset = fullCircleHrs * (1 - hrs / 24);
+    }
+
+    let progressPercent = 0;
+if(mode === 'down') {
+  progressPercent = totalSeconds === 0 ? 0 : (currentSeconds / totalSeconds) * 100;
+  progressPercent = 100 - progressPercent;  // odečítá se zleva
+} else {
+  progressPercent = totalSeconds === 0 ? 0 : (currentSeconds / totalSeconds) * 100;
+  progressPercent = 100 - progressPercent;  // stejné pro přičítání, pokud chceš
+}
+totalProgressBar.style.width = progressPercent + '%';
+
+  }
+
+  function tick() {
+    if(mode === 'down') {
+      if(currentSeconds > 0) {
+        currentSeconds--;
+        updateDisplay();
+      } else {
+        stopTimer();
+        alert('Timer došel.');
+      }
+    } else {
+      if(currentSeconds < totalSeconds) {
+        currentSeconds++;
+        updateDisplay();
+      } else {
+        stopTimer();
+        alert('Timer došel.');
+      }
+    }
+  }
+
+  function startTimer() {
+    if(totalSeconds === 0) {
+      alert('Nastav prosím nějaký čas.');
+      return;
+    }
+    if(!running) {
+      running = true;
+      startStopBtn.textContent = 'Stop';
+      startStopBtn.classList.add('running');
+      timerId = setInterval(tick, 1000);
+    }
+  }
+
+  function stopTimer() {
+    if(running) {
+      running = false;
+      startStopBtn.textContent = 'Start';
+      startStopBtn.classList.remove('running');
+      clearInterval(timerId);
+      timerId = null;
+    }
+  }
+
+  function resetTimer() {
+    stopTimer();
+    updateTotalSeconds();
+    updateDisplay();
+  }
+
+  function toggleMode() {
+    stopTimer();
+    mode = mode === 'down' ? 'up' : 'down';
+    toggleModeBtn.textContent = mode === 'down' ? '⬇️' : '⬆️';
+    updateTotalSeconds();
+    updateDisplay();
+  }
+
+  startStopBtn.addEventListener('click', () => {
+    if(running) stopTimer();
+    else startTimer();
+  });
+  resetBtn.addEventListener('click', resetTimer);
+  toggleModeBtn.addEventListener('click', toggleMode);
+
+  inputHours.addEventListener('change', () => {
+    if(!running) updateTotalSeconds();
+  });
+  inputMinutes.addEventListener('change', () => {
+    if(!running) updateTotalSeconds();
+  });
+  inputSeconds.addEventListener('change', () => {
+    if(!running) updateTotalSeconds();
+  });
+
+  updateTotalSeconds();
+  updateDisplay();
+
+})();
+</script>
+
+</body>
+</html>
